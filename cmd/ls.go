@@ -4,6 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -90,7 +91,34 @@ func lsArgs(args []string) []string {
 	return args
 }
 
-func checkFile(path string) bool {
+// returns true if file specified in path start with the PDF magic header
+func isPDF(path string) bool {
+	file, err := os.Open(path)
+	if err != nil {
+		// We only care about printing permissions errors
+		// and things like that
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		return false
+	}
+
+	defer file.Close()
+
+	header := make([]byte, 5)
+	_, err = file.Read(header)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(header, []byte("%PDF-"))
+}
+
+// returns true if file contains at least one highlight or is tagged with "ls" (is ls-able by ghligh)
+func HasHighlights(path string) bool {
+	// Ensure is a pdf file, might block for other kind of files
+	if !isPDF(path) {
+		return false
+	}
+
 	doc, err := document.Open(path)
 	if err != nil {
 		return false
@@ -134,16 +162,18 @@ var lsCmd = &cobra.Command{
 
 		var wg sync.WaitGroup
 		var found bool
+
 		for file := range ch {
 			wg.Add(1)
 			go func(f string) {
 				defer wg.Done()
-				if checkFile(f) {
+				if HasHighlights(f) {
 					found = true
 					fmt.Printf("%s\n", f)
 				}
 			}(file)
 		}
+
 		wg.Wait()
 
 		check, err := cmd.Flags().GetBool("check")
