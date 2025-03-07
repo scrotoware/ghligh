@@ -77,7 +77,14 @@ func (r *resolver) resolvePath(path string) {
 	}
 }
 
-func lsArgs(args []string) []string {
+// ArgsOrCWD returns the provided args slice if non-empty.
+// If args is empty, it returns a slice containing the current working directory.
+//
+// Example:
+//
+//	ArgsOrCWD([]string{"path1", "file2"}) -> []string{"path1", "file2"}
+//	ArgsOrCWD([]string{}) -> []string{"."}
+func ArgsOrCWD(args []string) []string {
 	if len(args) == 0 {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -147,7 +154,7 @@ var lsCmd = &cobra.Command{
 			address that particular issue
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		files := lsArgs(args)
+		files := ArgsOrCWD(args)
 		ch := make(chan string)
 		ctx := context.Background()
 
