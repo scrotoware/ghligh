@@ -191,6 +191,10 @@ func newAcc(acc int) int {
 	return acc
 }
 
+func (b *Browser) currentPage() int {
+	return b.currentDoc().getCurrentPage()
+}
+
 func (b *Browser) nextDoc(acc int) {
 	acc = newAcc(acc)
 	// todo implement
@@ -204,14 +208,12 @@ func (b *Browser) prevDoc(acc int) {
 func (b *Browser) nextPage(acc int) {
 	b.resetAccumulator()
 	acc = newAcc(acc)
-	currentPage := b.currentDoc().getCurrentPage()
-	b.updatePage(currentPage + acc)
+	b.updatePage(b.currentPage() + acc)
 }
 func (b *Browser) prevPage(acc int) {
 	b.resetAccumulator()
 	acc = newAcc(acc)
-	currentPage := b.currentDoc().getCurrentPage()
-	b.updatePage(currentPage - acc)
+	b.updatePage(b.currentPage() - acc)
 
 }
 func (b *Browser) scrollUp(acc int) {
@@ -224,7 +226,7 @@ func (b *Browser) scrollUp(acc int) {
 func (b *Browser) scrollDown(acc int) {
 	b.resetAccumulator()
 	acc = newAcc(acc)
-	b.pageContent.ScrollTo(acc, 0)
+	b.pageContent.ScrollTo(-acc, 0)
 	b.updateStatus()
 }
 
