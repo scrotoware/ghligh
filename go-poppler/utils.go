@@ -5,6 +5,13 @@ package poppler
 // #include <glib.h>
 // #include <unistd.h>
 // #include <stdlib.h>
+//
+//static void ignorePopplerWarnings(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) {
+//}
+//
+//static void disablePopplerWarnings() {
+//    g_log_set_handler("Poppler", G_LOG_LEVEL_WARNING, ignorePopplerWarnings, NULL);
+//}
 import "C"
 
 import "unsafe"
@@ -14,7 +21,7 @@ func toString(in *C.gchar) string {
 }
 
 func toBool(in C.gboolean) bool {
-	return  int(in) > 0
+	return int(in) > 0
 }
 
 /* convert a Quad struct to a GArray */
@@ -41,7 +48,7 @@ func quadsToGArray(quads []Quad) *C.GArray {
 			},
 		}
 
-		C.g_array_append_vals(garray, C.gconstpointer(&item),1)
+		C.g_array_append_vals(garray, C.gconstpointer(&item), 1)
 	}
 
 	return garray
@@ -66,7 +73,7 @@ func gArrayToQuads(q *C.GArray) []Quad {
 	return quads
 }
 
-func rectangleToPopplerRectangle (r Rectangle) C.PopplerRectangle {
+func rectangleToPopplerRectangle(r Rectangle) C.PopplerRectangle {
 	var pRect C.PopplerRectangle
 
 	pRect.x1 = C.double(r.X1)
@@ -82,4 +89,8 @@ func rectEq(r1 Rectangle, r2 Rectangle) bool {
 		r1.X2 == r2.X2 &&
 		r1.Y1 == r2.Y1 &&
 		r1.Y2 == r2.Y2
+}
+
+func DisablePopplerWarnings() {
+	C.disablePopplerWarnings()
 }

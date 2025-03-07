@@ -7,13 +7,25 @@ import (
 	"os"
 
 	"github.com/scrotadamus/ghligh/cmd/tag"
+	"github.com/scrotadamus/ghligh/go-poppler"
 	"github.com/spf13/cobra"
 )
+
+var warnings bool
 
 var rootCmd = &cobra.Command{
 	Use:   "ghligh",
 	Short: "pdf highlights swiss knife",
 	Long:  `ghligh can be used to manipulate pdf files in various ways.`,
+
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+
+		if !warnings {
+			poppler.DisablePopplerWarnings()
+		}
+
+		return nil
+	},
 
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
@@ -33,4 +45,5 @@ func Execute() {
 func init() {
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(tag.TagCmd)
+	rootCmd.PersistentFlags().BoolVar(&warnings, "warnings", false, "show poppler warnings")
 }
