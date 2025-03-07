@@ -134,6 +134,24 @@ func integrityCheck(tizio *GhlighDoc, caio *GhlighDoc) {
 
 }
 
+func (d *GhlighDoc) GetNPages() int {
+	return d.doc.GetNPages()
+}
+
+func (d *GhlighDoc) GetPageText(i int) (string, error) {
+	nPages := d.doc.GetNPages()
+
+	if i < 0 || i > nPages {
+		return "", fmt.Errorf("error page %d out of range %d", i, nPages)
+	}
+
+	p := d.doc.GetPage(i)
+	defer p.Close()
+
+	text := p.Text()
+	return text, nil
+}
+
 func (d *GhlighDoc) Save() (bool, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

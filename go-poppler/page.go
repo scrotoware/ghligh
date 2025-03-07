@@ -5,13 +5,16 @@ package poppler
 // #include <glib.h>
 // #include <cairo.h>
 import "C"
-import "unsafe"
-import "github.com/ungerik/go-cairo"
+import (
+	"unsafe"
+
+	"github.com/ungerik/go-cairo"
+)
 
 //import "fmt"
 
 type Page struct {
-	p *C.struct__PopplerPage
+	p            *C.struct__PopplerPage
 	openedAnnots []*Annot
 }
 
@@ -145,28 +148,28 @@ func (p *Page) Close() {
 
 // Converts a page into SVG and saves to file.
 // Inspired by https://github.com/dawbarton/pdf2svg
-func (p *Page) ConvertToSVG(filename string){
+func (p *Page) ConvertToSVG(filename string) {
 	width, height := p.Size()
 
 	// Open the SVG file
-	surface := cairo.NewSVGSurface( filename, width, height, cairo.SVG_VERSION_1_2 )
+	surface := cairo.NewSVGSurface(filename, width, height, cairo.SVG_VERSION_1_2)
 
 	// TODO Can be improved by using cairo_svg_surface_create_for_stream() instead of
 	//      cairo_svg_surface_create() for stream processing instead of file processing.
 	//      However, this needs to be changed in github.com/ungerik/go-cairo/surface.go
 
 	// Get cairo context pointer
-	_, drawcontext :=  surface.Native()
+	_, drawcontext := surface.Native()
 
 	// Render the PDF file into the SVG file
-	C.poppler_page_render_for_printing(p.p, (*C.cairo_t)(unsafe.Pointer(drawcontext)) );
+	C.poppler_page_render_for_printing(p.p, (*C.cairo_t)(unsafe.Pointer(drawcontext)))
 
 	// Close the SVG file
 	surface.ShowPage()
 	surface.Destroy()
 }
 
-func (p *Page) closeAnnotMappings(){
+func (p *Page) closeAnnotMappings() {
 	for i := 0; i < len(p.openedAnnots); i++ {
 		p.openedAnnots[i].Close()
 	}
@@ -186,7 +189,6 @@ func (p *Page) GetAnnots() (Annots []*Annot) {
 	for annotGlist != nil {
 		popplerAnnot := (*C.PopplerAnnotMapping)(annotGlist.data)
 
-
 		annot := &Annot{
 			am: popplerAnnot,
 		}
@@ -196,7 +198,6 @@ func (p *Page) GetAnnots() (Annots []*Annot) {
 
 		annots = append(annots, annot)
 		p.openedAnnots = append(p.openedAnnots, annot)
-
 
 		annotGlist = annotGlist.next
 	}
