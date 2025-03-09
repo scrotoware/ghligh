@@ -13,6 +13,45 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type Accumulatore struct {
+	value int
+}
+
+func newAccumulatore() *Accumulatore{
+	return &Accumulatore{
+		value: 0,
+	}
+}
+
+func (acc *Accumulatore) Prev() *Accumulatore {
+	if acc.value == 0 {
+		acc.value = 1
+	}
+	acc.value *= -1
+	return acc
+}
+
+func (acc *Accumulatore) Next() *Accumulatore{
+	if acc.value == 0 {
+		acc.value = 1
+	}
+	return acc
+}
+
+func (acc *Accumulatore) Pop() int {
+	oldValue := acc.value
+	acc.value = 0
+	return oldValue
+}
+
+func (acc *Accumulatore) Value() int {
+	return acc.value
+}
+
+func (acc *Accumulatore) EatRune(r rune) {
+	acc.value = acc.value*10 + int(r -'0')
+}
+
 type browsableDoc struct {
 	doc         *document.GhlighDoc
 	currentPage int
@@ -94,7 +133,7 @@ type Browser struct {
 	docs    []*browsableDoc
 	currDoc int
 
-	accumulator int
+	accumulator *Accumulatore
 }
 
 func newBrowser(paths []string) *Browser {
@@ -121,9 +160,9 @@ func newBrowser(paths []string) *Browser {
 			app.Draw()
 		})
 	layout := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(header, 1, 0, false).     // TODO Fixed size header (1 line)
-		AddItem(pageContent, 0, 1, true). // TODO Content takes all remaining space
-		AddItem(status, 1, 0, false)      // TODO Fixed size footer (1 line)
+		AddItem(header, 1, 0, false).
+		AddItem(pageContent, 0, 1, true).
+		AddItem(status, 1, 0, false)
 
 	var docs []*browsableDoc
 	for _, path := range paths {
@@ -141,6 +180,7 @@ func newBrowser(paths []string) *Browser {
 		status:      status,
 		layout:      layout,
 		docs:        docs,
+		accumulator: newAccumulatore(),
 	}
 
 }
@@ -150,7 +190,7 @@ func (b *Browser) currentDoc() *browsableDoc {
 }
 
 func (b *Browser) updateStatus() {
-	b.status.SetText(b.currentDoc().status(b.accumulator))
+	b.status.SetText(b.currentDoc().status(b.accumulator.Value()))
 }
 
 func (b *Browser) updateHeader() {
@@ -175,6 +215,17 @@ func (b *Browser) updatePage(newPage int) {
 
 	b.updateStatus()
 }
+
+func (b *Browser) setCurrentDoc(i int) {
+	// TODO usare modulo o quaclosa per ciclare documenti
+	if i > len(b.docs) {
+		i = len(b.docs)
+	} else if i < 0 {
+		i = 0
+	}
+	b.currDoc = i
+}
+
 func (b *Browser) Run() {
 	b.updatePage(0)
 	b.app.SetInputCapture(b.handle)
@@ -205,38 +256,11 @@ func (b *Browser) prevDoc(acc int) {
 	// todo implement
 
 }
-func (b *Browser) nextPage(acc int) {
-	b.resetAccumulator()
-	acc = newAcc(acc)
-	b.updatePage(b.currentPage() + acc)
-}
-func (b *Browser) prevPage(acc int) {
-	b.resetAccumulator()
-	acc = newAcc(acc)
-	b.updatePage(b.currentPage() - acc)
 
-}
-func (b *Browser) scrollUp(acc int) {
-	b.resetAccumulator()
-	acc = newAcc(acc)
-	b.pageContent.ScrollTo(acc, 0)
-	b.updateStatus()
-
-}
-func (b *Browser) scrollDown(acc int) {
-	b.resetAccumulator()
-	acc = newAcc(acc)
-	b.pageContent.ScrollTo(-acc, 0)
-	b.updateStatus()
-}
-
-func (b *Browser) resetAccumulator() {
-	b.accumulator = 0
-}
 func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyEscape:
-		b.accumulator = 0
+		b.accumulator.Pop()
 		b.updateStatus()
 	case tcell.KeyRune:
 		switch event.Rune() {
@@ -247,20 +271,24 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 			//			b.app.Stop()
 			//			return event
 		case 'N':
-			b.nextDoc(b.accumulator)
+			// TODO
+			b.setCurrentDoc(b.accumulator.Next().Pop())
 		case 'P':
-			b.prevDoc(b.accumulator)
+			// TODO
+			b.setCurrentDoc(b.accumulator.Prev().Pop())
 		case 'n':
-			b.nextPage(b.accumulator)
+			b.updatePage(b.currentPage() + b.accumulator.Next().Pop())
 		case 'p':
-			b.prevPage(b.accumulator)
+			b.updatePage(b.currentPage() + b.accumulator.Prev().Pop())
 		case 'j':
-			b.scrollUp(b.accumulator)
+			b.pageContent.ScrollTo(b.accumulator.Next().Pop(), 0)
+			b.updateStatus()
 		case 'k':
-			b.scrollDown(b.accumulator)
+			b.pageContent.ScrollTo(b.accumulator.Prev().Pop(), 0)
+			b.updateStatus()
 		default:
 			if event.Rune() >= '0' && event.Rune() <= '9' {
-				b.accumulator = b.accumulator*10 + int(event.Rune()-'0')
+				b.accumulator.EatRune(event.Rune())
 				b.updateStatus()
 			}
 		}
