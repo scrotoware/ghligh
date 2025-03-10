@@ -23,3 +23,25 @@ ghligh can be used to manipulate pdf files in various ways.
   -h, --help   help for ghligh
 
 Use `ghligh [command] --help` for more information about a command.
+
+### todo
+#### `ghligh ls`
+##### maybe in the future
+- implement `-t` option [ ]
+#### `ghligh browse`
+##### now
+- fix error if no document specified don't do anything [ ]
+##### maybe in the future
+- show highlights in text [ ]
+- list documents opened [ ]
+- command execution [ ]
+- if no document is specified blank screen [ ]
+
+#### `ghligh bookmark`
+- like ghligh tag but use different magic string to store bookmarks [ ]
+
+#### `ghligh action`
+- show poppler actions of a pdf file [ ]
+
+#### `ghligh serve / sync`
+
