@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -133,7 +134,7 @@ func (d *browsableDoc) getCurrentPageText() string {
 
 type Browser struct {
 	app         *tview.Application
-	pageContent *tview.TextView
+	pageContent *tview.TextArea
 	header      *tview.TextView
 	status      *tview.TextView
 	layout      *tview.Flex
@@ -153,13 +154,11 @@ func newBrowser(paths []string) *Browser {
 		SetChangedFunc(func() {
 			app.Draw()
 		})
-	pageContent := tview.NewTextView().
-		SetDynamicColors(true).
-		SetRegions(true).
-		SetWordWrap(true).
-		SetChangedFunc(func() {
-			app.Draw()
-		})
+
+	// a read-only textArea is more convenient than a textView
+	pageContent := tview.NewTextArea().
+		SetWordWrap(true)
+
 	status := tview.NewTextView().
 		SetDynamicColors(true).
 		SetRegions(true).
@@ -180,6 +179,15 @@ func newBrowser(paths []string) *Browser {
 		}
 		docs = append(docs, doc)
 	}
+
+	// make the textArea readonly, we will handle the navigation
+	// completely
+	pageContent.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		default:
+			return nil
+		}
+	})
 
 	return &Browser{
 		app:         app,
@@ -205,6 +213,12 @@ func (b *Browser) writeStatus(s string) {
 	b.status.SetText(s)
 }
 
+func (b *Browser) getLineText() string {
+	_, y, _, _ := b.pageContent.GetCursor()
+	text := b.pageContent.GetText()
+	return strings.Split(text, "\n")[y]
+}
+
 func (b *Browser) updateHeader() {
 	b.header.SetText(b.currentDoc().header())
 }
@@ -213,8 +227,7 @@ func (b *Browser) updateContent() {
 	text := b.currentDoc().getCurrentPageText()
 
 	b.pageContent.
-		SetTextAlign(tview.AlignLeft).
-		SetText(text).
+		SetText(text, false).
 		SetBorder(true)
 }
 
@@ -260,6 +273,12 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 			//TODO		case 'q': QUIT CURRENT DOCUMENT
 			//			b.app.Stop()
 			//			return event
+		case 'v':
+			if b.pageContent.HasFocus() {
+				b.app.SetFocus(b.status)
+			} else {
+				b.app.SetFocus(b.pageContent)
+			}
 		case 'g':
 			b.updatePage(b.accumulator.Goto(b.currentPage()).Pop())
 		case 'G':
@@ -275,10 +294,10 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 		case 'p':
 			b.updatePage(b.currentPage() + b.accumulator.Prev().Pop())
 		case 'j':
-			b.pageContent.ScrollTo(b.accumulator.Next().Pop(), 0)
+			//	b.pageContent.ScrollTo(b.accumulator.Next().Pop(), 0)
 			b.updateStatus()
 		case 'k':
-			b.pageContent.ScrollTo(b.accumulator.Prev().Pop(), 0)
+			//	b.pageContent.ScrollTo(b.accumulator.Prev().Pop(), 0)
 			b.updateStatus()
 		default:
 			if event.Rune() >= '0' && event.Rune() <= '9' {
