@@ -23,6 +23,18 @@ func newAccumulatore() *Accumulatore {
 	}
 }
 
+func (acc *Accumulatore) Goto(currentPage int) *Accumulatore {
+	if acc.value == 0 {
+		// if no argument specified go to current page (refresh screen)
+		acc.value = currentPage
+	} else {
+		// accumualtor seems off by one
+		acc.value -= 1
+	}
+
+	return acc
+}
+
 func (acc *Accumulatore) Prev() *Accumulatore {
 	if acc.value == 0 {
 		acc.value = 1
@@ -189,6 +201,10 @@ func (b *Browser) updateStatus() {
 	b.status.SetText(b.currentDoc().status(b.accumulator.Value()))
 }
 
+func (b *Browser) writeStatus(s string) {
+	b.status.SetText(s)
+}
+
 func (b *Browser) updateHeader() {
 	b.header.SetText(b.currentDoc().header())
 }
@@ -213,12 +229,11 @@ func (b *Browser) updatePage(newPage int) {
 }
 
 func (b *Browser) setCurrentDoc(i int) {
-	if i > len(b.docs) {
-		i = len(b.docs)
-	} else if i < 0 {
-		i = 0
+	if len(b.docs) == 0 {
+		return
 	}
-	b.currDoc = i
+
+	b.currDoc = (b.currDoc + i + len(b.docs)) % len(b.docs)
 }
 
 func (b *Browser) Run() {
@@ -245,8 +260,11 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 			//TODO		case 'q': QUIT CURRENT DOCUMENT
 			//			b.app.Stop()
 			//			return event
+		case 'g':
+			b.updatePage(b.accumulator.Goto(b.currentPage()).Pop())
+		case 'G':
+			b.updatePage(b.accumulator.Goto(b.currDoc).Pop())
 		case 'N':
-			// TODO
 			b.setCurrentDoc(b.accumulator.Next().Pop())
 			b.updatePage(b.currentPage())
 		case 'P':
@@ -265,6 +283,10 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 		default:
 			if event.Rune() >= '0' && event.Rune() <= '9' {
 				b.accumulator.EatRune(event.Rune())
+				b.updateStatus()
+			} else {
+				// reset accumulator
+				b.accumulator.Pop()
 				b.updateStatus()
 			}
 		}
