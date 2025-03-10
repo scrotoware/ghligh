@@ -17,7 +17,7 @@ type Accumulatore struct {
 	value int
 }
 
-func newAccumulatore() *Accumulatore{
+func newAccumulatore() *Accumulatore {
 	return &Accumulatore{
 		value: 0,
 	}
@@ -31,7 +31,7 @@ func (acc *Accumulatore) Prev() *Accumulatore {
 	return acc
 }
 
-func (acc *Accumulatore) Next() *Accumulatore{
+func (acc *Accumulatore) Next() *Accumulatore {
 	if acc.value == 0 {
 		acc.value = 1
 	}
@@ -49,7 +49,7 @@ func (acc *Accumulatore) Value() int {
 }
 
 func (acc *Accumulatore) EatRune(r rune) {
-	acc.value = acc.value*10 + int(r -'0')
+	acc.value = acc.value*10 + int(r-'0')
 }
 
 type browsableDoc struct {
@@ -93,11 +93,9 @@ func openBrowsableDoc(path string) (*browsableDoc, error) {
 }
 
 func (d *browsableDoc) header() string {
-	return fmt.Sprintf("[yellow]%s - %s ~ Page %d of %d[-]",
+	return fmt.Sprintf("[yellow]%s - %s",
 		d.title,
 		d.author,
-		d.currentPage+1,
-		d.nPages,
 	)
 }
 
@@ -108,8 +106,6 @@ func (d *browsableDoc) status(accumulator int) string {
 		accumulated = fmt.Sprintf("[%d] --", accumulator)
 	}
 
-	// TODO
-	// return fmt.Sprintf("%s %d", accumulated, percetuale_cursore)
 	return fmt.Sprintf("%s page %d of %d",
 		accumulated,
 		d.currentPage+1,
@@ -217,7 +213,6 @@ func (b *Browser) updatePage(newPage int) {
 }
 
 func (b *Browser) setCurrentDoc(i int) {
-	// TODO usare modulo o quaclosa per ciclare documenti
 	if i > len(b.docs) {
 		i = len(b.docs)
 	} else if i < 0 {
@@ -234,29 +229,9 @@ func (b *Browser) Run() {
 	}
 }
 
-// if acc is equal to 0 return 1, return acc otherwise
-func newAcc(acc int) int {
-	if acc == 0 {
-		return 1
-	}
-	return acc
-}
-
 func (b *Browser) currentPage() int {
 	return b.currentDoc().getCurrentPage()
 }
-
-func (b *Browser) nextDoc(acc int) {
-	acc = newAcc(acc)
-	// todo implement
-
-}
-func (b *Browser) prevDoc(acc int) {
-	acc = newAcc(acc)
-	// todo implement
-
-}
-
 func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyEscape:
@@ -273,9 +248,10 @@ func (b *Browser) handle(event *tcell.EventKey) *tcell.EventKey {
 		case 'N':
 			// TODO
 			b.setCurrentDoc(b.accumulator.Next().Pop())
+			b.updatePage(b.currentPage())
 		case 'P':
-			// TODO
 			b.setCurrentDoc(b.accumulator.Prev().Pop())
+			b.updatePage(b.currentPage())
 		case 'n':
 			b.updatePage(b.currentPage() + b.accumulator.Next().Pop())
 		case 'p':
