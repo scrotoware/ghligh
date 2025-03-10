@@ -26,12 +26,8 @@ Use `ghligh [command] --help` for more information about a command.
 
 ### todo
 #### `ghligh ls`
-##### maybe in the future
 - implement `-t` option [ ]
 #### `ghligh browse`
-##### now
-- fix error if no document specified don't do anything [ ]
-##### maybe in the future
 - show highlights in text [ ]
 - list documents opened [ ]
 - command execution [ ]
@@ -44,4 +40,3 @@ Use `ghligh [command] --help` for more information about a command.
 - show poppler actions of a pdf file [ ]
 
 #### `ghligh serve / sync`
-

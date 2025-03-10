@@ -316,6 +316,11 @@ to quickly create a Cobra application.`,
 			docs = append(docs, doc)
 		}
 
+		if len(docs) == 0 {
+			fmt.Fprintf(os.Stderr, "please specify at least one valid document\n")
+			return
+		}
+
 		// if more then one file show menu
 		browser := newBrowser(args)
 		browser.Run()
